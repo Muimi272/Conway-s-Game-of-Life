@@ -15,16 +15,24 @@ public class Console {
     private boolean isInitialized = false;
     private boolean terminalInitialized = false;
 
+    /** Creates a console renderer that writes to standard output. */
     public Console() {
         this.out = System.out;
     }
 
+    /**
+     * Allocates the reusable render buffer for a universe of the given size.
+     *
+     * @param width universe width
+     * @param height universe height
+     */
     public void initBuffer(int width, int height) {
         int capacity = 32 + (width * 2 + 1) * height;
         this.buffer = new StringBuilder(capacity);
         isInitialized = true;
     }
 
+    /** Enters the alternate terminal screen and hides the cursor once. */
     public void initTerminal() {
         if (!terminalInitialized) {
             out.print(ENTER_ALT_SCREEN + HIDE_CURSOR);
@@ -33,6 +41,7 @@ public class Console {
         }
     }
 
+    /** Restores the normal terminal screen and makes the cursor visible. */
     public void restoreTerminal() {
         if (terminalInitialized) {
             out.print(SHOW_CURSOR + EXIT_ALT_SCREEN);
@@ -41,11 +50,17 @@ public class Console {
         }
     }
 
+    /** Prints a message immediately to standard output. */
     public void print(String message) {
         out.print(message);
         out.flush();
     }
 
+    /**
+     * Renders the current universe using two character cells per grid cell.
+     *
+     * @param universe universe state to display
+     */
     public void render(Universe universe) {
         if (!isInitialized) {
             return;
@@ -69,6 +84,7 @@ public class Console {
         out.flush();
     }
 
+    /** Clears the current terminal screen and moves the cursor to its origin. */
     public void clear() {
         if (!isInitialized) {
             return;

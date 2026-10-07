@@ -8,10 +8,25 @@ public class Universe {
     private final int height;
     private byte[] currentState;
 
+    /**
+     * Creates a universe with the default random live-cell density.
+     *
+     * @param width universe width
+     * @param height universe height
+     * @throws IllegalArgumentException if dimensions are invalid
+     */
     public Universe(int width, int height) {
         this(width, height, 0.5);
     }
 
+    /**
+     * Creates a universe from a copied row-major cell-state snapshot.
+     *
+     * @param width universe width
+     * @param height universe height
+     * @param state initial cell states, each of which must be 0 or 1
+     * @throws IllegalArgumentException if dimensions or state are invalid
+     */
     public Universe(int width, int height, byte[] state) {
         validateDimensions(width, height);
         if (state == null || state.length != width * height) {
@@ -27,6 +42,14 @@ public class Universe {
         this.currentState = Arrays.copyOf(state, state.length);
     }
 
+    /**
+     * Creates a universe by independently sampling each cell at the given density.
+     *
+     * @param width universe width
+     * @param height universe height
+     * @param density live-cell probability in the inclusive range [0, 1]
+     * @throws IllegalArgumentException if dimensions or density are invalid
+     */
     public Universe(int width, int height, double density) {
         validateDimensions(width, height);
         if (!Double.isFinite(density) || density < 0 || density > 1) {
@@ -41,28 +64,48 @@ public class Universe {
         }
     }
 
+    /** Validates positive dimensions and the maximum supported cell count. */
     private static void validateDimensions(int width, int height) {
         if (width < 1 || height < 1 || (long) width * height > 1_000_000) {
             throw new IllegalArgumentException("Dimensions must be positive and contain at most 1,000,000 cells.");
         }
     }
 
+    /** Returns a defensive copy of the current row-major cell-state snapshot. */
     public byte[] getCurrentState() {
         return Arrays.copyOf(currentState, currentState.length);
     }
 
+    /** Returns the universe width. */
     public int getWidth() {
         return width;
     }
 
+    /** Returns the universe height. */
     public int getHeight() {
         return height;
     }
 
+    /**
+     * Returns the state of the cell at the given coordinates.
+     *
+     * @param x horizontal coordinate, starting at zero
+     * @param y vertical coordinate, starting at zero
+     * @return 1 if alive, otherwise 0
+     * @throws IndexOutOfBoundsException if the coordinates are outside the universe
+     */
     public byte getState(int x, int y) {
         return currentState[getIndex(x, y)];
     }
 
+    /**
+     * Converts valid coordinates to their row-major array index.
+     *
+     * @param x horizontal coordinate, starting at zero
+     * @param y vertical coordinate, starting at zero
+     * @return the corresponding cell-state array index
+     * @throws IndexOutOfBoundsException if the coordinates are outside the universe
+     */
     public int getIndex(int x, int y) {
         if (x < 0 || x >= width || y < 0 || y >= height) {
             throw new IndexOutOfBoundsException("Cell coordinates are outside the universe.");
@@ -70,6 +113,7 @@ public class Universe {
         return x + y * width;
     }
 
+    /** Counts the eight neighbors, wrapping coordinates across the universe edges. */
     private int getNeighbors(int x, int y) {
         int count = 0;
         for (int dx = -1; dx <= 1; dx++) {
@@ -83,6 +127,10 @@ public class Universe {
         return count;
     }
 
+    /**
+     * Advances one generation using the current state as an immutable snapshot.
+     * The computed state replaces the current state only after every cell is processed.
+     */
     public void next() {
         byte[] nextState = new byte[currentState.length];
         for (int y = 0; y < height; y++) {
